@@ -1,0 +1,70 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int                @id @default(autoincrement())
+  email          String             @unique
+  name           String
+  picture        String?
+  password       String?
+  createdAt      DateTime           @default(now())
+  parties        Party[]            @relation("UserParties")
+  participations PartyParticipant[]
+}
+
+model Party {
+  id                    Int                @id @default(autoincrement())
+  name                  String
+  pixKey                String? // Chave PIX do usuário criador da festa
+  cardToken             String? // Token para processar pagamentos por cartão
+  description           String?
+  goal                  Float?
+  valueForEachParcipant Float?
+  createdAt             DateTime           @default(now())
+  slug                  String             @unique
+  creatorId             Int
+  creator               User               @relation("UserParties", fields: [creatorId], references: [id])
+  participants          PartyParticipant[]
+  payments              Payment[]
+}
+
+model PartyParticipant {
+  id         Int       @id @default(autoincrement())
+  partyId    Int
+  userId     Int
+  paid       Boolean?   @default(false)
+  user       User      @relation(fields: [userId], references: [id])
+  party      Party     @relation(fields: [partyId], references: [id])
+  Payment    Payment[]
+
+  @@unique([partyId, userId]) // Cada participante só pode participar uma vez em cada festa
+}
+
+model Payment {
+  id            Int              @id @default(autoincrement())
+  amount        Float
+  paymentMethod PaymentMethod // Método de pagamento (PIX ou cartão)
+  status        PaymentStatus // Status do pagamento (pendente, concluído, falhado)
+  createdAt     DateTime         @default(now())
+  partyId       Int
+  participantId Int
+  party         Party            @relation(fields: [partyId], references: [id])
+  participant   PartyParticipant @relation(fields: [participantId], references: [id])
+}
+
+enum PaymentMethod {
+  PIX
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
