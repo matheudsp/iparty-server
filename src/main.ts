@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
 
 	app.enableCors()
+	app.use(cookieParser())
 
 	const config = new DocumentBuilder()
 		.setTitle('iParty API/REST')
@@ -14,7 +16,7 @@ async function bootstrap() {
 		.addTag('auth')
 		.addTag('participant')
 		.addTag('party')
-		.addTag('payment')
+		.addTag('paymentw')
 		.addTag('user')
 		.addBearerAuth(
 			{

@@ -12,11 +12,7 @@ export class AuthService {
   ) { }
 
   async googleLogin(dto: any) {
-    const { emails, displayName, photos } = dto.profile;
-
-    const email = emails[0].value;
-    const name = displayName;
-    const picture = photos[0]?.value;
+    const { email, name, picture } = dto.user;
 
     const user = await this.validateUser(
       {

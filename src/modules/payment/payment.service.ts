@@ -15,13 +15,14 @@ export class PaymentService {
         // this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
     }
 
-    async create(userId:number, dto: PaymentDto) {
-        const { amount,partyId,paymentMethod} = dto
+    async create(userId: number, dto: PaymentDto) {
+        const { amount, partyId, paymentMethod,status } = dto
         const payment = await this.prisma.payment.create({
-            data:{
-                paymentMethod:paymentMethod,
-                userId,
+            data: {
+                paymentMethod,
                 partyId,
+                participantId: userId,
+                status: status,
                 amount
             }
         })

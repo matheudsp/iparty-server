@@ -1,9 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
-enum PaymentMethod {
-    PIX,
-    CARD
+export enum PaymentMethod {
+    PIX = "PIX",
+    CARD = "CARD"
+}
+
+export enum PaymentStatus {
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED"
 }
 
 export class PaymentDto {
@@ -16,8 +22,12 @@ export class PaymentDto {
     @IsNumber()
     amount: number;
 
+    @ApiProperty({})
+    @IsEnum(PaymentStatus)
+    status: PaymentStatus
+
     @ApiProperty({ description: 'Método de pagamento', enum: PaymentMethod })
-    @IsEnum(PaymentMethod) // Use o enum do Prisma
+    @IsEnum(PaymentMethod) 
     paymentMethod: PaymentMethod;
 }
 
