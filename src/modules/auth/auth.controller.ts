@@ -1,32 +1,37 @@
-import { Body, Controller, Get, HttpCode, Post, Request, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { UserService } from '../user/user.service';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { RefreshJwtGuard } from './guards/refresh.guard';
+import { LoginDto } from './dto/auth.dto';
+
+
 
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private authService: AuthService,
+    private userService: UserService
+  ) { }
 
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth() { }
-
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Post('access-token')
-  async getNewTokens(@Body() dto: RefreshTokenDto) {
-    return this.authService.getNewTokens(dto.refreshToken)
+  @Post('register')
+  async registerUser(@Body() dto: CreateUserDto) {
+    return await this.userService.create(dto);
   }
 
-  @UsePipes(new ValidationPipe())
-  @HttpCode(200)
-  @Get('google/redirect')
-  @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Request() req) {
-    return this.authService.googleLogin(req.user)
+  @Post('login')
+  async login(@Body() dto: LoginDto) {
+    return await this.authService.login(dto);
+  }
+
+  @UseGuards(RefreshJwtGuard)
+  @Post('refresh')
+  async refreshToken(@Request() req) {
+    console.log('refreshed');
+
+    return await this.authService.refreshToken(req.user);
   }
 }

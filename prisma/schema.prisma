@@ -10,7 +10,8 @@ generator client {
 model User {
   id             Int                @id @default(autoincrement())
   email          String             @unique
-  name           String
+  firstName      String
+  lastName       String
   picture        String?
   password       String?
   createdAt      DateTime           @default(now())
@@ -35,13 +36,13 @@ model Party {
 }
 
 model PartyParticipant {
-  id         Int       @id @default(autoincrement())
-  partyId    Int
-  userId     Int
-  paid       Boolean?   @default(false)
-  user       User      @relation(fields: [userId], references: [id])
-  party      Party     @relation(fields: [partyId], references: [id])
-  Payment    Payment[]
+  id      Int       @id @default(autoincrement())
+  partyId Int
+  userId  Int
+  paid    Boolean?  @default(false)
+  user    User      @relation(fields: [userId], references: [id])
+  party   Party     @relation(fields: [partyId], references: [id])
+  Payment Payment[]
 
   @@unique([partyId, userId]) // Cada participante só pode participar uma vez em cada festa
 }

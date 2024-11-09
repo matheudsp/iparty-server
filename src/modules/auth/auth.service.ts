@@ -1,85 +1,69 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { LoginDto } from './dto/auth.dto';
 import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt'
-import { User } from '@prisma/client';
-import { AuthDto } from './dto/auth.dto';
+import { compare } from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+const EXPIRE_TIME = 20 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
-    private jwt: JwtService,
-  ) { }
+    private userService: UserService,
+    private jwtService: JwtService,
+  ) {}
 
-  async googleLogin(dto: any) {
-    const { email, name, picture } = dto.user;
-
-    const user = await this.validateUser(
-      {
-        email,
-        name,
-        picture
-      }
-    )
-
-    const tokens = await this.issueTokens(user.id)
-    
-    return {
-      user: this.returnUserFields(user),
-      ...tokens,
-    }
-  }
-
-  async getNewTokens(refreshToken: string) {
-    const result = await this.jwt.verifyAsync(refreshToken);
-    if (!result) throw new UnauthorizedException('Erro de atualização com token');
-
-    const user = await this.userService.findOne(result.id);
-    const tokens = await this.issueTokens(user.id);
+  async login(dto: LoginDto) {
+    const user = await this.validateUser(dto);
+    const payload = {
+      username: user.email,
+      sub: {
+        name: user.firstName,
+      },
+    };
 
     return {
-      user: this.returnUserFields(user),
-      ...tokens,
+      user,
+      backendTokens: {
+        accessToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '3600s',
+          secret: process.env.jwtSecretKey,
+        }),
+        refreshToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '30d',
+          secret: process.env.jwtRefreshTokenKey,
+        }),
+        expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+      },
     };
   }
 
-  private async issueTokens(userId: number) {
-    const data = { id: userId };
+  async validateUser(dto: LoginDto) {
+    const user = await this.userService.findByEmail(dto.email);
 
-    const accessToken = this.jwt.sign(data, {
-      expiresIn: '1h',
-    });
-
-    const refreshToken = this.jwt.sign(data, {
-      expiresIn: '7d',
-    });
-
-    return { accessToken, refreshToken };
+    if (user && (await compare(dto.password, user.password))) {
+      const { password, ...result } = user;
+      return result;
+    }
+    throw new UnauthorizedException();
   }
 
-  private returnUserFields(user: Partial<User>) {
+  async refreshToken(user: any) {
+    const payload = {
+      username: user.username,
+      sub: user.sub,
+    };
+
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      picture: user.picture,
+      accessToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '3600s',
+        secret: process.env.jwtSecretKey,
+      }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: '30d',
+        secret: process.env.jwtRefreshTokenKey,
+      }),
+      expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
     };
   }
-
-  private async validateUser(dto: AuthDto) {
-    let userExists = await this.userService.findByEmail(dto.email)
-
-
-    if (!userExists) {
-      userExists = await this.userService.create({
-        email: dto.email,
-        name: dto.name,
-        picture: dto.picture
-      })
-    }
-
-
-    return userExists
-  }
-
 }

@@ -24,8 +24,13 @@ export class PartyController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.partyService.findOne(+id);
+  }
+
+  @Get('by-slug/:slug')
+  findBySlug(@Param('partySlug') partySlug: string) {
+    return this.partyService.findBySlug(partySlug);
   }
 
   @Auth()

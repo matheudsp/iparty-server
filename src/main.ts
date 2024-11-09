@@ -1,14 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as cookieParser from 'cookie-parser';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
 
 	app.enableCors()
-	app.use(cookieParser())
-
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		}),
+	);
 	const config = new DocumentBuilder()
 		.setTitle('iParty API/REST')
 		.setDescription('API REST para o sistema iParty!')
@@ -16,7 +21,7 @@ async function bootstrap() {
 		.addTag('auth')
 		.addTag('participant')
 		.addTag('party')
-		.addTag('paymentw')
+		.addTag('payment')
 		.addTag('user')
 		.addBearerAuth(
 			{
@@ -31,8 +36,8 @@ async function bootstrap() {
 
 	const document = SwaggerModule.createDocument(app, config);
 
-	SwaggerModule.setup('', app, document)
+	SwaggerModule.setup('docs', app, document)
 
-	await app.listen(3333)
+	await app.listen(8000)
 }
 bootstrap()

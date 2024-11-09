@@ -8,7 +8,8 @@ CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
     "picture" TEXT,
     "password" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -23,9 +24,10 @@ CREATE TABLE "Party" (
     "pixKey" TEXT,
     "cardToken" TEXT,
     "description" TEXT,
-    "goal" DOUBLE PRECISION NOT NULL,
+    "goal" DOUBLE PRECISION,
+    "valueForEachParcipant" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "link" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
     "creatorId" INTEGER NOT NULL,
 
     CONSTRAINT "Party_pkey" PRIMARY KEY ("id")
@@ -36,8 +38,7 @@ CREATE TABLE "PartyParticipant" (
     "id" SERIAL NOT NULL,
     "partyId" INTEGER NOT NULL,
     "userId" INTEGER NOT NULL,
-    "amountPaid" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    "paid" BOOLEAN NOT NULL DEFAULT false,
+    "paid" BOOLEAN DEFAULT false,
 
     CONSTRAINT "PartyParticipant_pkey" PRIMARY KEY ("id")
 );
@@ -59,7 +60,7 @@ CREATE TABLE "Payment" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Party_link_key" ON "Party"("link");
+CREATE UNIQUE INDEX "Party_slug_key" ON "Party"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PartyParticipant_partyId_userId_key" ON "PartyParticipant"("partyId", "userId");

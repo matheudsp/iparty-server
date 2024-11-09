@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreatePartyDto, UpdatePartyDto } from './dto/party.dto';
 
@@ -34,6 +34,15 @@ export class PartyService {
     });
   }
 
+  async findBySlug(slug: string) {
+    const party = await this.prisma.party.findUnique({
+      where: { slug },
+    });
+
+    if (!party) throw new NotFoundException('Festa não encontrada!')
+    return party
+  }
+
   async update(id: number, dto: UpdatePartyDto) {
     const { description, goal, name } = dto
     return this.prisma.party.update({
@@ -64,14 +73,14 @@ export class PartyService {
     return str
   }
 
-  private randomSuffix = (length = 6 ) => {
+  private randomSuffix = (length = 6) => {
     return Math.random().toString(36).substring(2, 2 + length);
   }
 
   private async generateSlug(name: string): Promise<string> {
     let slug = this.slugify(name);
     let uniqueSlug = slug + '-' + this.randomSuffix();
-   
+
 
     // Verifica se o slug já existe no banco de dados
     while (await this.doesSlugExist(uniqueSlug)) {
